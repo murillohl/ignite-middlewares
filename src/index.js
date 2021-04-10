@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 
-const { v4: uuidv4, validate } = require('uuid');
+const { v4: uuidv4, validate} = require('uuid');
 
 const app = express();
 app.use(express.json());
@@ -11,18 +11,82 @@ const users = [];
 
 function checksExistsUserAccount(request, response, next) {
   // Complete aqui
+  const { username } = request.headers;
+
+  const user = users.find( (user) => user.username === username);
+
+  if(!user){
+
+    return response.status(404).json({ error: "Username not found" });
+
+  }
+
+  request.user = user;
+
+  return next();
+
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
   // Complete aqui
+  const { user } = request;
+
+  //const countTodos = user.todos.length;
+
+  // if(user.pro || (user.pro || countTodos < 10) ){
+
+  //   return next();
+
+  // }
+  if ((user.pro === false && user.todos.length < 10) | user.pro === true) {
+    return next();
+  }
+
+  return response.status(403).json({ error: "Maximo de todos possiveis atingidos"});
+
 }
 
 function checksTodoExists(request, response, next) {
   // Complete aqui
+  const { id } = request.params;
+  const { username } = request.headers;
+  const checkUuid = validate(id)
+
+  if (!checkUuid) {
+    return response.status(400).json({ error: "Uuid not Valid" })
+  }
+  const user = users.find((user) => user.username === username)
+  if (!user) {
+    return response.status(404).json({ error: "User not found" })
+  }
+
+  const todo = user.todos.find((todo) => todo.id === id)
+  if (!todo) {
+    return response.status(404).json({ error: "Todo not found" })
+  }
+
+  request.user = user;
+  request.todo = todo;
+
+  return next();
 }
 
 function findUserById(request, response, next) {
   // Complete aqui
+  const { id } = request.params;
+
+  const user = users.find( (user) => user.id === id)
+
+  if(!user){
+
+    return response.status(404).json({ error: "User Id not found"})
+
+  }
+  
+  request.user = user;
+
+  return next();
+
 }
 
 app.post('/users', (request, response) => {
